@@ -40,6 +40,13 @@ from PyQt5.QtGui import QKeySequence, QKeyEvent
 
 from qutebrowser.utils import utils
 
+_SCAN_CODE_KEY_MAP = \
+    {49: 96, 10: 49, 11: 50, 12: 51, 13: 52, 14: 53, 15: 54, 16: 55, 17: 56,
+     18: 57, 19: 48, 20: 45, 21: 61, 24: 81, 25: 87, 26: 69, 27: 82, 28: 84,
+     29: 89, 30: 85, 31: 73, 32: 79, 33: 80, 34: 91, 35: 93, 51: 92, 38: 65,
+     39: 83, 40: 68, 41: 70, 42: 71, 43: 72, 44: 74, 45: 75, 46: 76, 47: 59,
+     48: 39, 52: 90, 53: 88, 54: 67, 55: 86, 56: 66, 57: 78, 58: 77, 59: 44,
+     60: 46, 61: 47}
 
 # Map Qt::Key values to their Qt::KeyboardModifier value.
 _MODIFIER_MAP = {
@@ -577,7 +584,10 @@ class KeySequence:
 
     def append_event(self, ev: QKeyEvent) -> 'KeySequence':
         """Create a new KeySequence object with the given QKeyEvent added."""
-        key = Qt.Key(ev.key())
+
+        scan_code = ev.nativeScanCode()
+        key = Qt.Key(_SCAN_CODE_KEY_MAP[scan_code]
+                     if scan_code in _SCAN_CODE_KEY_MAP else ev.key())
 
         _assert_plain_key(key)
         _assert_plain_modifier(ev.modifiers())
