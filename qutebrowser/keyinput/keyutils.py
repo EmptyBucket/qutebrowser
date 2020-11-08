@@ -40,13 +40,28 @@ from PyQt5.QtGui import QKeySequence, QKeyEvent
 
 from qutebrowser.utils import utils
 
-_SCAN_CODE_KEY_MAP = \
-    {49: 96, 10: 49, 11: 50, 12: 51, 13: 52, 14: 53, 15: 54, 16: 55, 17: 56,
-     18: 57, 19: 48, 20: 45, 21: 61, 24: 81, 25: 87, 26: 69, 27: 82, 28: 84,
-     29: 89, 30: 85, 31: 73, 32: 79, 33: 80, 34: 91, 35: 93, 51: 92, 38: 65,
-     39: 83, 40: 68, 41: 70, 42: 71, 43: 72, 44: 74, 45: 75, 46: 76, 47: 59,
-     48: 39, 52: 90, 53: 88, 54: 67, 55: 86, 56: 66, 57: 78, 58: 77, 59: 44,
-     60: 46, 61: 47}
+_SCAN_CODE_KEY_MAP = dict([*[((i[0], Qt.NoModifier), i[1]) for i in
+                             [(49, 96), (10, 49), (11, 50), (12, 51), (13, 52),
+                              (14, 53), (15, 54), (16, 55), (17, 56), (18, 57),
+                              (19, 48), (20, 45), (21, 61), (24, 81), (25, 87),
+                              (26, 69), (27, 82), (28, 84), (29, 89), (30, 85),
+                              (31, 73), (32, 79), (33, 80), (34, 91), (35, 93),
+                              (51, 92), (38, 65), (39, 83), (40, 68), (41, 70),
+                              (42, 71), (43, 72), (44, 74), (45, 75), (46, 76),
+                              (47, 59), (48, 39), (52, 90), (53, 88), (54, 67),
+                              (55, 86), (56, 66), (57, 78), (58, 77), (59, 44),
+                              (60, 46), (61, 47)]],
+                           *[((i[0], Qt.ShiftModifier), i[1]) for i in
+                             [(49, 126), (10, 33), (11, 64), (12, 35), (13, 36),
+                              (14, 37), (15, 94), (16, 38), (17, 42), (18, 40),
+                              (19, 41), (20, 95), (21, 43), (24, 81), (25, 87),
+                              (26, 69), (27, 82), (28, 84), (29, 89), (30, 85),
+                              (31, 73), (32, 79), (33, 80), (34, 123), (35, 125),
+                              (51, 124), (38, 65), (39, 83), (40, 68), (41, 70),
+                              (42, 71), (43, 72), (44, 74), (45, 75), (46, 76),
+                              (47, 58), (48, 34), (52, 90), (53, 88), (54, 67),
+                              (55, 86), (56, 66), (57, 78), (58, 77), (59, 60),
+                              (60, 62), (61, 63)]]])
 
 # Map Qt::Key values to their Qt::KeyboardModifier value.
 _MODIFIER_MAP = {
@@ -585,7 +600,7 @@ class KeySequence:
     def append_event(self, ev: QKeyEvent) -> 'KeySequence':
         """Create a new KeySequence object with the given QKeyEvent added."""
 
-        scan_code = ev.nativeScanCode()
+        scan_code = (ev.nativeScanCode(), ev.modifiers() & Qt.ShiftModifier)
         key = Qt.Key(_SCAN_CODE_KEY_MAP[scan_code]
                      if scan_code in _SCAN_CODE_KEY_MAP else ev.key())
 
@@ -618,8 +633,8 @@ class KeySequence:
         # In addition, Shift also *is* relevant when other modifiers are
         # involved. Shift-Ctrl-X should not be equivalent to Ctrl-X.
         if (modifiers == Qt.ShiftModifier and
-                _is_printable(key) and
-                not ev.text().isupper()):
+            _is_printable(key) and
+            (key < ord('A') or ord('Z') < key)):
             modifiers = Qt.KeyboardModifiers()  # type: ignore[assignment]
 
         # On macOS, swap Ctrl and Meta back
